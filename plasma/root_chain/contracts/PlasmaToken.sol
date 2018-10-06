@@ -7,17 +7,16 @@ contract PlasmaToken {
     uint8  public decimals = 18;
     address public withdrawalOwner;
     address public masterContract;
-    uint public totalSupply;
+    uint256 public totalSupply;
 
-    event  Approval(address indexed src, address indexed guy, uint wad);
-    event  Transfer(address indexed src, address indexed dst, uint wad);
-    event  Creation(address indexed dst, uint wad);
+    event Approval(address indexed src, address indexed guy, uint256 wad);
+    event Transfer(address indexed src, address indexed dst, uint256 wad);
+    event Creation(address indexed dst, uint256 wad);
 
-    mapping (address => mapping (address => uint))  public  allowance;
-    mapping(address => uint) public balanceOf;
+    mapping (address => mapping (address => uint)) public allowance;
+    mapping (address => uint256) public balanceOf;
     address[] tokenHolders;
-    mapping(address => uint) tokenHolderIndex;
-
+    mapping(address => uint256) tokenHolderIndex;
 
     function() payable public{
         require(msg.value == 0);
@@ -38,24 +37,24 @@ contract PlasmaToken {
         return address(this).balance;
     }
 
-    function approve(address guy, uint wad) public returns (bool) {
+    function approve(address guy, uint256 wad) public returns (bool) {
         allowance[msg.sender][guy] = wad;
         emit Approval(msg.sender, guy, wad);
         return true;
     }
 
-    function transfer(address dst, uint wad) public returns (bool) {
+    function transfer(address dst, uint256 wad) public returns (bool) {
         return transferFrom(msg.sender, dst, wad);
     }
 
-    function transferFrom(address src, address dst, uint wad)
+    function transferFrom(address src, address dst, uint256 wad)
         public
         returns (bool)
     {
         require(addressCount() < 128);//calculate what this number should be
         require(balanceOf[src] >= wad && !isContract(dst)) ;
 
-        if (src != msg.sender && allowance[src][msg.sender] != uint(-1) && msg.sender!= masterContract) {
+        if (src != msg.sender && allowance[src][msg.sender] != uint256(-1) && msg.sender!= masterContract) {
             require(allowance[src][msg.sender] >= wad);
             allowance[src][msg.sender] -= wad;
         }
@@ -67,8 +66,8 @@ contract PlasmaToken {
         balanceOf[src] -= wad;
         balanceOf[dst] += wad;
         if(balanceOf[src]==0){
-            uint tokenIndex = tokenHolderIndex[src];
-            uint lastTokenIndex = tokenHolders.length - 1;
+            uint256 tokenIndex = tokenHolderIndex[src];
+            uint256 lastTokenIndex = tokenHolders.length - 1;
             address lastToken = tokenHolders[lastTokenIndex];
             tokenHolders[tokenIndex] = lastToken;
             tokenHolderIndex[lastToken] = tokenIndex;
@@ -79,21 +78,23 @@ contract PlasmaToken {
         return true;
     }
 
-
-    function getBalanceandHolderbyIndex(uint _index) public constant returns(uint _balance,address _holder){
-        return(balanceOf[tokenHolders[_index]],tokenHolders[_index]);
+    function getBalanceByHolder(address _holder) public constant returns (uint256) {
+        return balanceOf[_holder];
     }
 
-    function addressCount() public constant returns(uint _count){
+    function getBalanceAndHolderByIndex(uint256 _index) public constant returns(uint256 _balance, address _holder){
+        return (balanceOf[tokenHolders[_index]], tokenHolders[_index]);
+    }
+
+    function addressCount() public constant returns(uint256 _count) {
         return tokenHolders.length;
     }
 
-    function isContract(address _addr) internal returns (bool _isContract){
+    function isContract(address _addr) internal returns (bool _isContract) {
       uint32 size;
       assembly {
         size := extcodesize(_addr)
       }
       return (size > 0);
     }
-
 }
