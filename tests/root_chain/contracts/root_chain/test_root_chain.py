@@ -216,7 +216,7 @@ def test_finalize_exits(t, u, root_chain):
 
 
 def test_token_transfers(t, u, root_chain):
-        two_weeks = 60 * 60 * 24 * 14
+    two_weeks = 60 * 60 * 24 * 14
     owner, value_1, key = t.a1, 100, t.k1
     tx1 = Transaction(0, 0, 0, 0, 0, 0,
                       NULL_ADDRESS,
