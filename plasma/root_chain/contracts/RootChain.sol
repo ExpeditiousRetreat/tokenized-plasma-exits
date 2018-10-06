@@ -267,14 +267,16 @@ contract RootChain {
     }
 
 
-    function finalizeExits(address _token) public {
+    function finalizeExits(address _token,uint _withdrawalMax) public {
         uint256 utxoPos;
         uint256 exitableAt;
         require(ETHEREUM == _token, "Token must be ETH.");
         (exitableAt, utxoPos) = getNextExit(_token);
         PriorityQueue queue = PriorityQueue(exitsQueues[_token]);
         Exit memory currentExit = exits[utxoPos];
-        while (exitableAt < block.timestamp) {
+        uint paid;
+        while (exitableAt < block.timestamp && paid < _withdrawalMax) {
+            paid++;
             currentExit = exits[utxoPos];
             PlasmaToken token = PlasmaToken(currentExit.plasmaToken);
             uint add_count = token.addressCount(); //We need to make it so this can't get too big
