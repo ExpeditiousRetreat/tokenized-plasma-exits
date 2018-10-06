@@ -110,7 +110,7 @@ contract RootChain {
         exitsQueues[ETHEREUM] = address(new PriorityQueue());
         target = address(new PlasmaToken());
         PlasmaToken plasma = PlasmaToken(target);
-        plasma.init(0,msg.sender);
+        plasma.init(0, msg.sender);
     }
 
 
@@ -243,9 +243,9 @@ contract RootChain {
         uint256 eUtxoPos = _txBytes.getUtxoPos(_eUtxoIndex);
         uint256 txindex = (_cUtxoPos % 1000000000) / 10000;
         bytes32 root = plasmaBlocks[_cUtxoPos / 1000000000].root;
-        var txHash = keccak256(_txBytes);
-        var confirmationHash = keccak256(txHash, root);
-        var merkleHash = keccak256(txHash, _sigs);
+        bytes32 txHash = keccak256(_txBytes);
+        bytes32 confirmationHash = keccak256(txHash, root);
+        bytes32 merkleHash = keccak256(txHash, _sigs);
         address owner = exits[eUtxoPos].owner;
 
         // Validate the spending transaction.
@@ -283,7 +283,7 @@ contract RootChain {
             uint256 balance;
             address holder;
             for(uint256 i=0;i<add_count;i++){
-                (balance,holder) = token.getBalanceandHolderbyIndex(i);
+                (balance, holder) = token.getBalanceandHolderbyIndex(i);
                 holder.transfer(balance);
             }
             popWithdrawal(currentExit.plasmaToken);
@@ -375,7 +375,7 @@ contract RootChain {
         queue.insert(exitableAt, _utxoPos);
         address new_token = createClone();
         PlasmaToken Token = PlasmaToken(new_token);
-        Token.init(_amount,msg.sender);
+        Token.init(_amount, msg.sender);
 
         exits[_utxoPos] = Exit({
             owner: _exitor,
@@ -384,12 +384,12 @@ contract RootChain {
             amount: _amount
         });
         
-        openWithdrawalIndex[new_token]= openWithdrawals.length;
+        openWithdrawalIndex[new_token] = openWithdrawals.length;
         openWithdrawals.push(new_token);
         emit ExitStarted(msg.sender, _utxoPos, _token, _amount);
     }
 
-        /**
+    /**
     *@dev Creates factory clone
     *@param _target is the address being cloned
     *@return address for clone
@@ -406,4 +406,9 @@ contract RootChain {
             result := create(0, data, len)
         }
     }
+
+//    function getUserBalance(address _owner, address _withdrawal) {
+//        withdrawal = PlasmaToken(openWithdrawals[_withdrawal]);
+//        return withdrawal.balanceOf[_owner];
+//    }
 }
