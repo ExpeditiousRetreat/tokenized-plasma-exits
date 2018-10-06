@@ -52,6 +52,7 @@ contract RootChain{
      */
     uint256 public constant EXIT_BOND = 1234567890;
     uint256 public constant CHILD_BLOCK_INTERVAL = 1000;
+    address public constant ETHEREUM = address(0);
 
     address public operator;
 
@@ -106,7 +107,7 @@ contract RootChain{
         currentFeeExit = 1;
         // Support only ETH on deployment; other tokens need
         // to be added explicitly.
-        exitsQueues[address(0)] = address(new PriorityQueue());
+        exitsQueues[ETHEREUM] = address(new PriorityQueue());
         target = address(new PlasmaToken());
         PlasmaToken plasma = PlasmaToken(target);
         plasma.init(0,msg.sender);
@@ -149,7 +150,7 @@ contract RootChain{
         });
         currentDepositBlock = currentDepositBlock.add(1);
 
-        emit Deposit(msg.sender, depositBlock, address(0), msg.value);
+        emit Deposit(msg.sender, depositBlock, ETHEREUM, msg.value);
     }
 
     /**
@@ -269,7 +270,7 @@ contract RootChain{
     function finalizeExits(address _token) public {
         uint256 utxoPos;
         uint256 exitableAt;
-        require(address(0) == _token, "Token must be ETH.");
+        require(ETHEREUM == _token, "Token must be ETH.");
         (exitableAt, utxoPos) = getNextExit(_token);
         PriorityQueue queue = PriorityQueue(exitsQueues[_token]);
         Exit memory currentExit = exits[utxoPos];
