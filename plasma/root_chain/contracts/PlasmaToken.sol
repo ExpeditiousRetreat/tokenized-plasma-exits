@@ -19,19 +19,19 @@ contract PlasmaToken {
     mapping(address => uint) tokenHolderIndex;
 
 
-    function() public{
+    function() payable public{
         require(msg.value == 0);
     }
 
     function init(uint _amount,address _owner) {
-        require (!isContract(_owner));
+        require (!isContract(_owner) && masterContract == address(0));
         balanceOf[_owner] += _amount;
         withdrawalOwner = _owner;
         masterContract = msg.sender;
         tokenHolderIndex[_owner] = tokenHolders.length;
         tokenHolders.push(_owner);
         totalSupply = _amount;
-        emit Creation(_owner, msg.value);
+        emit Creation(_owner, _amount);
     }
 
     function totalSupply() public view returns (uint) {
