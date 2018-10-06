@@ -284,7 +284,7 @@ contract RootChain{
                 (balance,holder) = token.getBalanceandHolderbyIndex(i);
                 holder.transfer(balance);
             }
-            finsher(currentExit.plasmaToken);
+            popWithdrawal(currentExit.plasmaToken);
             if (currentExit.owner != address(0)) {
                 currentExit.owner.transfer(EXIT_BOND);
             }
@@ -296,6 +296,15 @@ contract RootChain{
                 return;
             }
         }
+    }
+
+    function popWithdrawal(address _token) internal {
+        uint tokenIndex = openWithdrawalIndex[_token];
+        uint lastTokenIndex = openWithdrawals.length.sub(1);
+        address lastToken = openWithdrawals[lastTokenIndex];
+        openWithdrawals[tokenIndex] = lastToken;
+        openWithdrawalIndex[lastToken] = tokenIndex;
+        openWithdrawals.length--;
     }
 
 
@@ -394,14 +403,5 @@ contract RootChain{
             let data := add(clone, 0x20)
             result := create(0, data, len)
         }
-    }
-
-    function finsher(address _token) internal {
-            uint tokenIndex = openWithdrawalIndex[_token];
-            uint lastTokenIndex = openWithdrawals.length.sub(1);
-            address lastToken = openWithdrawals[lastTokenIndex];
-            openWithdrawals[tokenIndex] = lastToken;
-            openWithdrawalIndex[lastToken] = tokenIndex;
-            openWithdrawals.length--;
     }
 }
