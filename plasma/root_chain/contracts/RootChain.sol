@@ -33,6 +33,7 @@ contract RootChain {
     event ExitStarted(
         address indexed exitor,
         uint256 indexed utxoPos,
+        address new_token,
         address token,
         uint256 amount
     );
@@ -386,7 +387,7 @@ contract RootChain {
         
         openWithdrawalIndex[new_token] = openWithdrawals.length;
         openWithdrawals.push(new_token);
-        emit ExitStarted(msg.sender, _utxoPos, _token, _amount);
+        emit ExitStarted(msg.sender, _utxoPos, new_token,_token, _amount);
     }
 
     /**
