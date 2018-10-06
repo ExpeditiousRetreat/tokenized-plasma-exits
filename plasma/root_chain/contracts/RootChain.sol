@@ -267,20 +267,22 @@ contract RootChain {
     }
 
 
-    function finalizeExits(address _token) public {
+    function finalizeExits(address _token, uint256 _withdrawalMax) public {
         uint256 utxoPos;
         uint256 exitableAt;
         require(ETHEREUM == _token, "Token must be ETH.");
         (exitableAt, utxoPos) = getNextExit(_token);
         PriorityQueue queue = PriorityQueue(exitsQueues[_token]);
         Exit memory currentExit = exits[utxoPos];
-        while (exitableAt < block.timestamp) {
+        uint256 paid;
+        while (exitableAt < block.timestamp && paid < _withdrawalMax) {
+            paid++;
             currentExit = exits[utxoPos];
             PlasmaToken token = PlasmaToken(currentExit.plasmaToken);
-            uint add_count = token.addressCount(); //We need to make it so this can't get too big
-            uint balance;
+            uint256 add_count = token.addressCount(); //We need to make it so this can't get too big
+            uint256 balance;
             address holder;
-            for(uint i=0;i<add_count;i++){
+            for(uint256 i=0;i<add_count;i++){
                 (balance,holder) = token.getBalanceandHolderbyIndex(i);
                 holder.transfer(balance);
             }
@@ -299,8 +301,8 @@ contract RootChain {
     }
 
     function popWithdrawal(address _token) internal {
-        uint tokenIndex = openWithdrawalIndex[_token];
-        uint lastTokenIndex = openWithdrawals.length.sub(1);
+        uint256 tokenIndex = openWithdrawalIndex[_token];
+        uint256 lastTokenIndex = openWithdrawals.length.sub(1);
         address lastToken = openWithdrawals[lastTokenIndex];
         openWithdrawals[tokenIndex] = lastToken;
         openWithdrawalIndex[lastToken] = tokenIndex;
@@ -395,7 +397,7 @@ contract RootChain {
     function createClone() internal returns (address result) {
         bytes memory clone = hex"600034603b57603080600f833981f36000368180378080368173bebebebebebebebebebebebebebebebebebebebe5af43d82803e15602c573d90f35b3d90fd";
         bytes20 targetBytes = bytes20(target);
-        for (uint i = 0; i < 20; i++) {
+        for (uint256 i = 0; i < 20; i++) {
             clone[26 + i] = targetBytes[i];
         }
         assembly {
