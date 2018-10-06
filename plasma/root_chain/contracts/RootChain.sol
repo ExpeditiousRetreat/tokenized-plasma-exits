@@ -52,6 +52,7 @@ contract RootChain {
      */
     uint256 public constant EXIT_BOND = 1234567890;
     uint256 public constant CHILD_BLOCK_INTERVAL = 1000;
+    address public constant ETHEREUM = address(0);
 
     address public operator;
 
@@ -65,12 +66,12 @@ contract RootChain {
     address target;
 
     address[] openWithdrawals;
-    mapping(address => uint) public openWithdrawalAmounts;
     mapping(address => uint) public openWithdrawalIndex;
 
     struct Exit {
         address owner;
         address token;
+        address plasmaToken;
         uint256 amount;
     }
 
@@ -106,8 +107,10 @@ contract RootChain {
         currentFeeExit = 1;
         // Support only ETH on deployment; other tokens need
         // to be added explicitly.
-        exitsQueues[address(0)] = address(new PriorityQueue());
-        target = new ERC20();
+        exitsQueues[ETHEREUM] = address(new PriorityQueue());
+        target = address(new PlasmaToken());
+        PlasmaToken plasma = PlasmaToken(target);
+        plasma.init(0,msg.sender);
     }
 
 
@@ -147,7 +150,7 @@ contract RootChain {
         });
         currentDepositBlock = currentDepositBlock.add(1);
 
-        emit Deposit(msg.sender, depositBlock, address(0), msg.value);
+        emit Deposit(msg.sender, depositBlock, ETHEREUM, msg.value);
     }
 
     /**
@@ -263,33 +266,32 @@ contract RootChain {
         return PriorityQueue(exitsQueues[_token]).getMin();
     }
 
-    /**
-     * @dev Processes any exits that have completed the challenge period.
-     * @param _token Token type to process.
-     */
-    function finalizeExits(address _token, uint _amount) public {
+
+    function finalizeExits(address _token) public {
         uint256 utxoPos;
         uint256 exitableAt;
+        require(ETHEREUM == _token, "Token must be ETH.");
         (exitableAt, utxoPos) = getNextExit(_token);
         PriorityQueue queue = PriorityQueue(exitsQueues[_token]);
         Exit memory currentExit = exits[utxoPos];
-        ERC20 Token ERC20.at(_token);
-        require(Token.balanceOf(msg.sender) >= _amount);
         while (exitableAt < block.timestamp) {
             currentExit = exits[utxoPos];
-
-            // FIXME: handle ERC-20 transfer
-            require(address(0) == _token, "Token must be ETH.");
-
-            if (currentExit.owner != address(0)) {
-                currentExit.owner.transfer(currentExit.amount + EXIT_BOND);
+            PlasmaToken token = PlasmaToken(currentExit.plasmaToken);
+            uint add_count = token.addressCount(); //We need to make it so this can't get too big
+            uint balance;
+            address holder;
+            for(uint i=0;i<add_count;i++){
+                (balance,holder) = token.getBalanceandHolderbyIndex(i);
+                holder.transfer(balance);
             }
-
+            finsher(currentExit.plasmaToken);
+            if (currentExit.owner != address(0)) {
+                currentExit.owner.transfer(EXIT_BOND);
+            }
             queue.delMin();
             delete exits[utxoPos].owner;
-
             if (queue.currentSize() > 0) {
-                (exitableAt, utxoPos) = getNextExit(_token);
+                (exitableAt,utxoPos) = getNextExit(_token);
             } else {
                 return;
             }
@@ -360,20 +362,19 @@ contract RootChain {
         uint256 exitableAt = Math.max(_created_at + 2 weeks, block.timestamp + 1 weeks);
         PriorityQueue queue = PriorityQueue(exitsQueues[_token]);
         queue.insert(exitableAt, _utxoPos);
+        address new_token = createClone();
+        PlasmaToken Token = PlasmaToken(new_token);
+        Token.init(_amount,msg.sender);
 
         exits[_utxoPos] = Exit({
             owner: _exitor,
             token: _token,
+            plasmaToken: new_token,
             amount: _amount
         });
-
-        address new_token = createClone();
-        PlasmaToken Token = PlasmaToken.at(new_token);
-        Token.init(_amount,msg.sender);
         
         openWithdrawalIndex[new_token]= openWithdrawals.length;
         openWithdrawals.push(new_token);
-        openWithdrawalAmounts[new_token] = _amount;
         emit ExitStarted(msg.sender, _utxoPos, _token, _amount);
     }
 
@@ -395,13 +396,12 @@ contract RootChain {
         }
     }
 
-    function finsher() internal {
-                if(userOrders[_order.maker].length > 1){
-            tokenIndex = userOrderIndex[_orderId];
-            lastTokenIndex = userOrders[_order.maker].length.sub(1);
-            lastToken = userOrders[_order.maker][lastTokenIndex];
-            userOrders[_order.maker][tokenIndex] = lastToken;
-            userOrderIndex[lastToken] = tokenIndex;
-        }
+    function finsher(address _token) internal {
+            uint tokenIndex = openWithdrawalIndex[_token];
+            uint lastTokenIndex = openWithdrawals.length.sub(1);
+            address lastToken = openWithdrawals[lastTokenIndex];
+            openWithdrawals[tokenIndex] = lastToken;
+            openWithdrawalIndex[lastToken] = tokenIndex;
+            openWithdrawals.length--;
     }
 }
