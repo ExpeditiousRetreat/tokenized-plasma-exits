@@ -99,7 +99,7 @@ class Deployer(object):
 
         return abi, bytecode
 
-    def deploy_contract(self, contract_name, gas=5000000, args=(), concise=True):
+    def deploy_contract(self, contract_name, gas=6500000, args=(), concise=True):
         """Deploys a contract to the given Ethereum network using Web3
 
         Args:
