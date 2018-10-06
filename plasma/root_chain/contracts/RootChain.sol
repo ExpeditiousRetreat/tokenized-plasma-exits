@@ -283,8 +283,8 @@ contract RootChain {
             uint256 add_count = token.addressCount(); //We need to make it so this can't get too big
             uint256 balance;
             address holder;
-            for(uint256 i=0;i<add_count;i++){
-                (balance, holder) = token.getBalanceandHolderbyIndex(i);
+            for(uint256 i = 0; i < add_count; i++) {
+                (balance, holder) = token.getBalanceAndHolderByIndex(i);
                 holder.transfer(balance);
             }
             popWithdrawal(currentExit.plasmaToken);
@@ -408,8 +408,8 @@ contract RootChain {
         }
     }
 
-//    function getUserBalance(address _owner, address _withdrawal) {
-//        withdrawal = PlasmaToken(openWithdrawals[_withdrawal]);
-//        return withdrawal.balanceOf[_owner];
-//    }
+    function getHolderBalance(address _holder, address _withdrawal) returns (uint256 _balance) {
+        PlasmaToken withdrawal = PlasmaToken(_withdrawal);
+        return withdrawal.getBalanceByHolder(_holder);
+    }
 }
