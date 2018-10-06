@@ -205,56 +205,11 @@ def test_finalize_exits(t, u, root_chain):
     root_chain.deposit(value=value_1, sender=key)
     utxo_pos1 = encode_utxo_id(dep1_blknum, 0, 0)
     exit_bond = root_chain.EXIT_BOND()
-    token = root_chain.startDepositExit(utxo_pos1, NULL_ADDRESS, tx1.amount1, sender=key, value=exit_bond)
+    root_chain.startDepositExit(utxo_pos1, NULL_ADDRESS, tx1.amount1, sender=key, value=exit_bond)
     t.chain.head_state.timestamp += two_weeks * 2
     assert root_chain.exits(utxo_pos1) == ['0x' + owner.hex(), NULL_ADDRESS_HEX, 100]
     pre_balance = t.chain.head_state.get_balance(owner)
-    root_chain.finalizeExits(token,tx.amount1,sender=t.k2)
+    root_chain.finalizeExits(sender=t.k2)
     post_balance = t.chain.head_state.get_balance(owner)
     assert post_balance == pre_balance + value_1 + exit_bond
-    assert root_chain.exits(utxo_pos1) == [NULL_ADDRESS_HEX, NULL_ADDRESS_HEX, value_1]
-
-
-def test_token_transfers(t, u, root_chain):
-    two_weeks = 60 * 60 * 24 * 14
-    owner, value_1, key = t.a1, 100, t.k1
-    tx1 = Transaction(0, 0, 0, 0, 0, 0,
-                      NULL_ADDRESS,
-                      owner, value_1, NULL_ADDRESS, 0)
-    dep1_blknum = root_chain.getDepositBlock()
-    root_chain.deposit(value=value_1, sender=key)
-    utxo_pos1 = encode_utxo_id(dep1_blknum, 0, 0)
-    exit_bond = root_chain.EXIT_BOND()
-    token = root_chain.startDepositExit(utxo_pos1, NULL_ADDRESS, tx1.amount1, sender=key, value=exit_bond)
-    token.transfer(t.k1,t.amount1/2,sender=t.k2);
-    assert token.getBalance()==t.amount/2;
-    t.chain.head_state.timestamp += two_weeks * 2
-    assert root_chain.exits(utxo_pos1) == ['0x' + owner.hex(), NULL_ADDRESS_HEX, 100]
-    pre_balance = t.chain.head_state.get_balance(owner)
-    root_chain.finalizeExits(token,tx.amount1,sender=t.k2)
-    post_balance = t.chain.head_state.get_balance(owner)
-    assert post_balance == pre_balance + value_1 + exit_bond
-    assert root_chain.exits(utxo_pos1) == [NULL_ADDRESS_HEX, NULL_ADDRESS_HEX, value_1]
-
-
-def test_multiple_token_withdrawals(t, u, root_chain):
-    two_weeks = 60 * 60 * 24 * 14
-    owner, value_1, key = t.a1, 100, t.k1
-    tx1 = Transaction(0, 0, 0, 0, 0, 0,
-                      NULL_ADDRESS,
-                      owner, value_1, NULL_ADDRESS, 0)
-    dep1_blknum = root_chain.getDepositBlock()
-    root_chain.deposit(value=value_1, sender=key)
-    utxo_pos1 = encode_utxo_id(dep1_blknum, 0, 0)
-    exit_bond = root_chain.EXIT_BOND()
-    token = root_chain.startDepositExit(utxo_pos1, NULL_ADDRESS, tx1.amount1, sender=key, value=exit_bond)
-    token.transfer(t.k1,t.amount1/2,sender=t.k2);
-    assert token.getBalance()==t.amount/2;
-    t.chain.head_state.timestamp += two_weeks * 2
-    assert root_chain.exits(utxo_pos1) == ['0x' + owner.hex(), NULL_ADDRESS_HEX, 100]
-    pre_balance = t.chain.head_state.get_balance(owner)
-    root_chain.finalizeExits(token,tx.amount1/2,sender=t.k1)
-    root_chain.finalizeExits(token,tx.amount1/2,sender=t.k2)
-    post_balance = t.chain.head_state.get_balance(owner)
-    assert post_balance == pre_balance + value_1/2 + exit_bond
     assert root_chain.exits(utxo_pos1) == [NULL_ADDRESS_HEX, NULL_ADDRESS_HEX, value_1]
