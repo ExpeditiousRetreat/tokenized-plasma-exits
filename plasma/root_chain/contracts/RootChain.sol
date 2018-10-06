@@ -6,13 +6,14 @@ import "./PlasmaRLP.sol";
 import "./Merkle.sol";
 import "./Validate.sol";
 import "./PriorityQueue.sol";
+import "./PlasmaToken.sol";
 
 
 /**
  * @title RootChain
  * @dev This contract secures a utxo payments plasma child chain to ethereum.
  */
-contract RootChain {
+contract RootChain{
     using SafeMath for uint256;
     using Merkle for bytes32;
     using PlasmaRLP for bytes;
@@ -49,7 +50,6 @@ contract RootChain {
     /*
      * Storage
      */
-
     uint256 public constant EXIT_BOND = 1234567890;
     uint256 public constant CHILD_BLOCK_INTERVAL = 1000;
 
@@ -62,6 +62,11 @@ contract RootChain {
     mapping (uint256 => PlasmaBlock) public plasmaBlocks;
     mapping (uint256 => Exit) public exits;
     mapping (address => address) public exitsQueues;
+    address target;
+
+    address[] openWithdrawals;
+    mapping(address => uint) public openWithdrawalAmounts;
+    mapping(address => uint) public openWithdrawalIndex;
 
     struct Exit {
         address owner;
@@ -102,6 +107,7 @@ contract RootChain {
         // Support only ETH on deployment; other tokens need
         // to be added explicitly.
         exitsQueues[address(0)] = address(new PriorityQueue());
+        target = new ERC20();
     }
 
 
@@ -261,12 +267,14 @@ contract RootChain {
      * @dev Processes any exits that have completed the challenge period.
      * @param _token Token type to process.
      */
-    function finalizeExits(address _token) public {
+    function finalizeExits(address _token, uint _amount) public {
         uint256 utxoPos;
         uint256 exitableAt;
         (exitableAt, utxoPos) = getNextExit(_token);
         PriorityQueue queue = PriorityQueue(exitsQueues[_token]);
         Exit memory currentExit = exits[utxoPos];
+        ERC20 Token ERC20.at(_token);
+        require(Token.balanceOf(msg.sender) >= _amount);
         while (exitableAt < block.timestamp) {
             currentExit = exits[utxoPos];
 
@@ -359,6 +367,41 @@ contract RootChain {
             amount: _amount
         });
 
+        address new_token = createClone();
+        PlasmaToken Token = PlasmaToken.at(new_token);
+        Token.init(_amount,msg.sender);
+        
+        openWithdrawalIndex[new_token]= openWithdrawals.length;
+        openWithdrawals.push(new_token);
+        openWithdrawalAmounts[new_token] = _amount;
         emit ExitStarted(msg.sender, _utxoPos, _token, _amount);
+    }
+
+        /**
+    *@dev Creates factory clone
+    *@param _target is the address being cloned
+    *@return address for clone
+    */
+    function createClone() internal returns (address result) {
+        bytes memory clone = hex"600034603b57603080600f833981f36000368180378080368173bebebebebebebebebebebebebebebebebebebebe5af43d82803e15602c573d90f35b3d90fd";
+        bytes20 targetBytes = bytes20(target);
+        for (uint i = 0; i < 20; i++) {
+            clone[26 + i] = targetBytes[i];
+        }
+        assembly {
+            let len := mload(clone)
+            let data := add(clone, 0x20)
+            result := create(0, data, len)
+        }
+    }
+
+    function finsher() internal {
+                if(userOrders[_order.maker].length > 1){
+            tokenIndex = userOrderIndex[_orderId];
+            lastTokenIndex = userOrders[_order.maker].length.sub(1);
+            lastToken = userOrders[_order.maker][lastTokenIndex];
+            userOrders[_order.maker][tokenIndex] = lastToken;
+            userOrderIndex[lastToken] = tokenIndex;
+        }
     }
 }
