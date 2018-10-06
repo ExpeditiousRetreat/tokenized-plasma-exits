@@ -10,7 +10,7 @@ setup(
     name='plasma',
     description='Plasma MVP',
     long_description=readme,
-    author='David Knott',
+    author='ExpeditiousRetreat',
     author_email='',
     license=license,
     packages=find_packages(exclude=('tests')),

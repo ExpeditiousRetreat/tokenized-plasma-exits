@@ -13,7 +13,7 @@ import "./PlasmaToken.sol";
  * @title RootChain
  * @dev This contract secures a utxo payments plasma child chain to ethereum.
  */
-contract RootChain{
+contract RootChain {
     using SafeMath for uint256;
     using Merkle for bytes32;
     using PlasmaRLP for bytes;
