@@ -107,8 +107,8 @@ contract RootChain{
         // Support only ETH on deployment; other tokens need
         // to be added explicitly.
         exitsQueues[address(0)] = address(new PriorityQueue());
-        target = new PlasmaToken();
-        PlasmaToken plasma = PlasmaToken.at(target);
+        target = address(new PlasmaToken());
+        PlasmaToken plasma = PlasmaToken(target);
         plasma.init(0,msg.sender);
     }
 
@@ -275,12 +275,12 @@ contract RootChain{
         Exit memory currentExit = exits[utxoPos];
         while (exitableAt < block.timestamp) {
             currentExit = exits[utxoPos];
-            PlasmaToken token = PlasmaToken.at(currentExit.plasmaToken);
+            PlasmaToken token = PlasmaToken(currentExit.plasmaToken);
             uint add_count = token.addressCount(); //We need to make it so this can't get too big
             uint balance;
             address holder;
             for(uint i=0;i<add_count;i++){
-                (balance,holder) = token.getBalanceAndHolderByIndex(i);
+                (balance,holder) = token.getBalanceandHolderbyIndex(i);
                 holder.transfer(balance);
             }
             finsher(currentExit.plasmaToken);
@@ -362,7 +362,7 @@ contract RootChain{
         PriorityQueue queue = PriorityQueue(exitsQueues[_token]);
         queue.insert(exitableAt, _utxoPos);
         address new_token = createClone();
-        PlasmaToken Token = PlasmaToken.at(new_token);
+        PlasmaToken Token = PlasmaToken(new_token);
         Token.init(_amount,msg.sender);
 
         exits[_utxoPos] = Exit({
