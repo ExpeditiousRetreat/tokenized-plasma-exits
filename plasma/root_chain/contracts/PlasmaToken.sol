@@ -24,7 +24,7 @@ contract PlasmaToken {
     uint8  public decimals = 18;
     address public withdrawalOwner;
     address public masterContract;
-
+    uint public totalSupply;
 
     event  Approval(address indexed src, address indexed guy, uint wad);
     event  Transfer(address indexed src, address indexed dst, uint wad);
@@ -32,6 +32,8 @@ contract PlasmaToken {
 
     mapping (address => mapping (address => uint))  public  allowance;
     mapping(address => uint) public balanceOf;
+    address[] tokenHolders;
+    mapping(address => uint) tokenHolderIndex;
 
 
     function() public payable {
@@ -39,9 +41,13 @@ contract PlasmaToken {
     }
 
     function init(uint _amount,address _owner) {
+        require (!isContract(_owner));
         balanceOf[_owner] += _amount;
         withdrawalOwner = _owner;
         masterContract = msg.sender;
+        tokenHolderIndex[_owner] = tokenHolders.length;
+        tokenHolders.push(_owner);
+        totalSupply = _amount;
         emit Creation(_owner, msg.value);
     }
 
@@ -63,18 +69,43 @@ contract PlasmaToken {
         public
         returns (bool)
     {
-        require(balanceOf[src] >= wad);
+        require(balanceOf[src] >= wad && !isContract(dst)) ;
 
-        if (src != msg.sender && allowance[src][msg.sender] != uint(-1)) {
+        if (src != msg.sender && allowance[src][msg.sender] != uint(-1) && msg.sender!= masterContract) {
             require(allowance[src][msg.sender] >= wad);
             allowance[src][msg.sender] -= wad;
         }
 
+        if(balanceOf[dst] == 0){
+            tokenHolderIndex[dst] = tokenHolders.length;
+            tokenHolders.push(dst);
+        }
         balanceOf[src] -= wad;
         balanceOf[dst] += wad;
+        if(balanceOf[src]==0){
+            tokenIndex = tokenHolderIndex[src];
+            lastTokenIndex = tokenHolders.length.sub(1);
+            lastToken = tokenHolders[lastTokenIndex];
+            tokenHolders[tokenIndex] = lastToken;
+            tokenHoldersIndex[lastToken] = tokenIndex;
+            tokenHolders.length--;
+        }
 
         emit Transfer(src, dst, wad);
-
         return true;
     }
+
+
+    function getBalanceandHolderbyIndex(uint _index) public constant returns(uint _balance,address _holder){
+        return(balanceOf[tokenHolders[_index]]),tokenHolders[_index]);
+    }
+
+    function isContract(address _addr) internal returns (bool isContract){
+      uint32 size;
+      assembly {
+        size := extcodesize(_addr)
+      }
+      return (size > 0);
+    }
+
 }

@@ -65,7 +65,6 @@ contract RootChain{
     address target;
 
     address[] openWithdrawals;
-    mapping(address => uint) public openWithdrawalAmounts;
     mapping(address => uint) public openWithdrawalIndex;
 
     struct Exit {
@@ -263,33 +262,32 @@ contract RootChain{
         return PriorityQueue(exitsQueues[_token]).getMin();
     }
 
-    /**
-     * @dev Processes any exits that have completed the challenge period.
-     * @param _token Token type to process.
-     */
+
     function finalizeExits(address _token, uint _amount) public {
         uint256 utxoPos;
         uint256 exitableAt;
-        (exitableAt, utxoPos) = getNextExit(_token);
+        require(address(0) == _token, "Token must be ETH.");
+        (exitableAt, token_address,utxoPos) = getNextExit(_token);
         PriorityQueue queue = PriorityQueue(exitsQueues[_token]);
         Exit memory currentExit = exits[utxoPos];
-        ERC20 Token ERC20.at(_token);
-        require(Token.balanceOf(msg.sender) >= _amount);
         while (exitableAt < block.timestamp) {
             currentExit = exits[utxoPos];
-
-            // FIXME: handle ERC-20 transfer
-            require(address(0) == _token, "Token must be ETH.");
-
-            if (currentExit.owner != address(0)) {
-                currentExit.owner.transfer(currentExit.amount + EXIT_BOND);
+            PlasmaToken token = PlasmaToken.at(token_address)
+            add_count = token.addressCount(); //We need to make it so this can't get too big
+            uint balance;
+            address holder;
+            for(uint i=0;i<add_count;i++){
+                (balance,holder) = token.getBalanceAndHolderByIndex(i);
+                holder.transfer(balance);
             }
-
+            finsher(token_address);
+            if (currentExit.owner != address(0)) {
+                currentExit.owner.transfer(EXIT_BOND);
+            }
             queue.delMin();
             delete exits[utxoPos].owner;
-
             if (queue.currentSize() > 0) {
-                (exitableAt, utxoPos) = getNextExit(_token);
+                (exitableAt, token_address,utxoPos) = getNextExit(_token);
             } else {
                 return;
             }
@@ -395,13 +393,12 @@ contract RootChain{
         }
     }
 
-    function finsher() internal {
-                if(userOrders[_order.maker].length > 1){
-            tokenIndex = userOrderIndex[_orderId];
-            lastTokenIndex = userOrders[_order.maker].length.sub(1);
-            lastToken = userOrders[_order.maker][lastTokenIndex];
-            userOrders[_order.maker][tokenIndex] = lastToken;
-            userOrderIndex[lastToken] = tokenIndex;
-        }
+    function finsher(address _token) internal {
+            tokenIndex = openWithdrawalIndex[_token];
+            lastTokenIndex = openWithdrawals.length.sub(1);
+            lastToken = openWithdrawals[lastTokenIndex];
+            openWithdrawals[tokenIndex] = lastToken;
+            openWithdrawalIndex[lastToken] = tokenIndex;
+            openWithdrawals.length--;
     }
 }
