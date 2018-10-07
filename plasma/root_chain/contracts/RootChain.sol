@@ -108,10 +108,17 @@ contract RootChain {
         currentFeeExit = 1;
         // Support only ETH on deployment; other tokens need
         // to be added explicitly.
-        exitsQueues[ETHEREUM] = address(new PriorityQueue());
-        target = address(new PlasmaToken());
-        PlasmaToken plasma = PlasmaToken(target);
-        plasma.init(0, msg.sender);
+        
+    }
+
+    function setTarget(address _target) public {
+        require(target == address(0));
+        target = _target;
+    }
+
+    function setPriority(address _priority) public{
+        require(exitsQueues[ETHEREUM]  == address(0));
+        exitsQueues[ETHEREUM] = _priority;
     }
 
 
