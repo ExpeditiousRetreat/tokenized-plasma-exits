@@ -52,9 +52,9 @@ The team for developing this code is as follows:
 
 Nicholas Fett
 
-Bijan 
+Bijan Massoumi
 
-Jeff
+Jeffrey Piercy
 
-Eddy 
+Eddy Lazzarin
 
