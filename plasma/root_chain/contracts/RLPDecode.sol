@@ -46,7 +46,7 @@ library RLPDecode {
         uint dataLen;
         for (uint i = 0; i < items; i++) {
             dataLen = _itemLength(memPtr);
-            result[i] = RLPItem(dataLen, memPtr);
+            result[i] = RLPItem(dataLen, memPtr); 
             memPtr = memPtr + dataLen;
         }
     }
